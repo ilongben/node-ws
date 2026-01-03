@@ -8,16 +8,17 @@ const crypto = require('crypto');
 const { Buffer } = require('buffer');
 const { exec, execSync } = require('child_process');
 const { WebSocket, createWebSocketStream } = require('ws');
-常量 UUID = 进程.环境.UUID || '5393c289-76b4-4169-9d71-0ac937ec2269'; // 运行哪吒v1,在不同的平台需要改UUID,否则会被覆盖
-常量 NEZHA_SERVER = 进程.环境.NEZHA_SERVER || '';       // 哪吒v1填写形式：nz.abc.com:8008   哪吒v0填写形式：nz.abc.com
-常量 NEZHA_PORT = 进程.环境.NEZHA_PORT || '';           // 哪吒v1没有此变量，v0的agent端口为{443,8443,2096,2087,2083,2053}其中之一时开启tls
-常量NEZHA_KEY=进程.环境||'';// v1的NZ_CLIENT_SECRET或v0的代理端口
-常量 域名 = 进程.环境.域名 || 'longben.dpdns.org';       // 填写项目域名或已反代的域名，不带前缀，例如：abc-domain.com
-常量 自动访问 = 进程.环境.自动访问 || 真;       // 是否开启自动访问保活，false为关闭，true为开启，需同时填写DOMAIN变量
-常量 路径 = 进程.环境.路径 || UUID.切片(0, 8);     // 节点路径，默认获取uuid前8位
-常量 SUB_PATH = 进程.环境.SUB_PATH || 'sub';            // 获取节点的订阅路径
-常量 名称 = 进程.环境.名称 || '';                       // 节点名称
-常量 PORT = 进程.环境.端口 || 7860;                     // http和ws服务端口
+
+const UUID = process.env.UUID || '5393c289-76b4-4169-9d71-0ac937ec2269';
+const NEZHA_SERVER = process.env.NEZHA_SERVER || '';
+const NEZHA_PORT = process.env.NEZHA_PORT || '';
+const NEZHA_KEY = process.env.NEZHA_KEY || ''; // 请确认环境变量名是 NEZHA_KEY
+const DOMAIN = process.env.DOMAIN || 'longben.dpdns.org';
+const AUTO_VISIT = process.env.AUTO_VISIT || true;
+const WSPATH = process.env.WSPATH || UUID.slice(0, 8);
+const SUB_PATH = process.env.SUB_PATH || 'sub';
+const NAME = process.env.NAME || '';
+const PORT = process.env.PORT || 7860;
 
 让 ISP = '';
 常量 获取ISP = 异步 () => {
