@@ -20,61 +20,61 @@ const SUB_PATH = process.env.SUB_PATH || 'sub';
 const NAME = process.env.NAME || '';
 const PORT = process.env.PORT || 7860;
 
-让 ISP = '';
-常量 获取ISP = 异步 () => {
-  尝试 {
-    常量 结果 = 等待 axios.获取('https://api.ip.sb/geoip');
-    常量 数据 = 结果.数据;
-    ISP = `${数据.国家代码}-${数据.ISP}`.替换(/ /g, '_');
-  } 捕获 (e) {
-    ISP = '未知';
+let ISP = '';
+const getISP = async () => {
+  try {
+    const result = await axios.get(' https://api.ip.sb/geoip');
+    const data = result.data;
+    ISP = `${data.country_code}-${data.isp}`.replace(/ /g, '_');
+  } catch (e) {
+    ISP = 'Unknown';
   }
-}
-获取ISP();
+};
+getISP();
 
-常量 httpServer = http.createServer((请求, 结果) => {
-  如果 (请求.网址 === '/') {
-    常量 文件路径 = path.连接(__dirname, 'index.html');
-    fs.readFile(文件路径, 'utf8', (err, 内容) => {
-      如果 (错误) {
-        res.写入头部(200, { 'Content-Type': 'text/html' });
+const httpServer = http.createServer((req, res) => {
+  if (req.url === '/') {
+    const filePath = path.join(__dirname, 'index.html');
+    fs.readFile(filePath, 'utf8', (err, content) => {
+      if (err) {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end();
-        返回;
+        return;
       }
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(content);
     });
-    返回;
-  } else 如果 (请求.网址 === `/${SUB_PATH}`) {
-    常量 namePart = 名称 ? `${名称}-${ISP}` : ISP;
-    常量 vlessURL = `vless://${UUID}@${DOMAIN}:443?encryption=none&security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
-    常量 trojanURL = `trojan://${UUID}@${DOMAIN}:443?security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
-    常量 订阅 = vlessURL + '\n' + trojanURL;
-    常量 base64内容 = 缓冲区.从(订阅).转换为字符串('base64');
+    return;
+  } else if (req.url === `/${SUB_PATH}`) {
+    const namePart = NAME ? `${NAME}-${ISP}` : ISP;
+    const vlessURL = `vless://${UUID}@${DOMAIN}:443?encryption=none&security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
+    const trojanURL = `trojan://${UUID}@${DOMAIN}:443?security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
+    const subscription = vlessURL + '\n' + trojanURL;
+    const base64Content = Buffer.from(subscription).toString('base64');
     
-    结果.writeHead(200, { 'Content-Type': 'text/plain' });
-    结果.end(base64内容 + '\n');
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end(base64Content + '\n');
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
-    resres.end('未找到\n');
+    res.end('Not Found\n');
   }
 });
 
-常量 wss = new WebSocket.Server({ server: httpServer });
+const wss = new WebSocket.Server({ server: httpServer });
 const uuid = UUID.replace(/-/g, "");
 const DNS_SERVERS = ['8.8.4.4', '1.1.1.1'];
-// 自定义DNS
-function resolveHost(主机) {
-  返回 新的 Promise((resolve, 拒绝) => {
+
+function resolveHost(host) {
+  return new Promise((resolve, reject) => {
     if (/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(host)) {
-      解析(host);
-      返回;
+      resolve(host);
+      return;
     }
     let attempts = 0;
     function tryNextDNS() {
       if (attempts >= DNS_SERVERS.length) {
-        reject(newError`无法使用所有DNS服务器解析${host}`);
-        返回;
+        reject(new Error(`无法使用所有DNS服务器解析${host}`));
+        return;
       }
       const dnsServer = DNS_SERVERS[attempts];
       attempts++;
