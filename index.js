@@ -1,79 +1,79 @@
 const os = require('os');
 const http = require('http');
 const fs = require('fs');
-const axios = require('axios');
-const net = require('net');
-const path = require('path');
-const crypto = require('crypto');
-const { Buffer } = require('buffer');
-const { exec, execSync } = require('child_process');
-const { WebSocket, createWebSocketStream } = require('ws');
-const UUID = process.env.UUID || '5efabea4-f6d4-91fd-b8f0-17e004c89c60'; // 运行哪吒v1,在不同的平台需要改UUID,否则会被覆盖
-const NEZHA_SERVER = process.env.NEZHA_SERVER || '';       // 哪吒v1填写形式：nz.abc.com:8008   哪吒v0填写形式：nz.abc.com
-const NEZHA_PORT = process.env.NEZHA_PORT || '';           // 哪吒v1没有此变量，v0的agent端口为{443,8443,2096,2087,2083,2053}其中之一时开启tls
-const NEZHA_KEY = process.env.NEZHA_KEY || '';             // v1的NZ_CLIENT_SECRET或v0的agent端口                
-const DOMAIN = process.env.DOMAIN || '1234.abc.com';       // 填写项目域名或已反代的域名，不带前缀，例如：abc-domain.com
-const AUTO_ACCESS = process.env.AUTO_ACCESS || true;       // 是否开启自动访问保活,false为关闭,true为开启,需同时填写DOMAIN变量
-const WSPATH = process.env.WSPATH || UUID.slice(0, 8);     // 节点路径，默认获取uuid前8位
-const SUB_PATH = process.env.SUB_PATH || 'sub';            // 获取节点的订阅路径
-const NAME = process.env.NAME || '';                       // 节点名称
-const PORT = process.env.PORT || 7860;                     // http和ws服务端口
+常量axios = 导入('axios');
+常量 net = 要求('net');
+常量 path = 要求('路径');
+常量 加密 = 要求('加密');
+常量 { 缓冲区 } = 要求('缓冲区');
+常量 { 执行, execSync } = 要求('child_process');
+常量 { WebSocket, createWebSocketStream } = 要求('ws');
+常量 UUID = 进程.环境.UUID || '5393c289-76b4-4169-9d71-0ac937ec2269'; // 运行哪吒v1,在不同的平台需要改UUID,否则会被覆盖
+常量 NEZHA_SERVER = 进程.环境.NEZHA_SERVER || '';       // 哪吒v1填写形式：nz.abc.com:8008   哪吒v0填写形式：nz.abc.com
+常量 NEZHA_PORT = 进程.环境.NEZHA_PORT || '';           // 哪吒v1没有此变量，v0的agent端口为{443,8443,2096,2087,2083,2053}其中之一时开启tls
+常量NEZHA_KEY=进程.环境||'';// v1的NZ_CLIENT_SECRET或v0的代理端口
+常量 域名 = 进程.环境.域名 || 'longben.dpdns.org';       // 填写项目域名或已反代的域名，不带前缀，例如：abc-domain.com
+常量 自动访问 = 进程.环境.自动访问 || 真;       // 是否开启自动访问保活，false为关闭，true为开启，需同时填写DOMAIN变量
+常量 路径 = 进程.环境.路径 || UUID.切片(0, 8);     // 节点路径，默认获取uuid前8位
+常量 SUB_PATH = 进程.环境.SUB_PATH || 'sub';            // 获取节点的订阅路径
+常量 名称 = 进程.环境.名称 || '';                       // 节点名称
+常量 PORT = 进程.环境.端口 || 7860;                     // http和ws服务端口
 
-let ISP = '';
-const GetISP = async () => {
-  try {
-    const res = await axios.get('https://api.ip.sb/geoip');
-    const data = res.data;
-    ISP = `${data.country_code}-${data.isp}`.replace(/ /g, '_');
-  } catch (e) {
-    ISP = 'Unknown';
+让 ISP = '';
+常量 获取ISP = 异步 () => {
+  尝试 {
+    常量 结果 = 等待 axios.获取('https://api.ip.sb/geoip');
+    常量 数据 = 结果.数据;
+    ISP = `${数据.国家代码}-${数据.ISP}`.替换(/ /g, '_');
+  } 捕获 (e) {
+    ISP = '未知';
   }
 }
-GetISP();
+获取ISP();
 
-const httpServer = http.createServer((req, res) => {
-  if (req.url === '/') {
-    const filePath = path.join(__dirname, 'index.html');
-    fs.readFile(filePath, 'utf8', (err, content) => {
-      if (err) {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end('Hello world!');
-        return;
+常量 httpServer = http.createServer((请求, 结果) => {
+  如果 (请求.网址 === '/') {
+    常量 文件路径 = path.连接(__dirname, 'index.html');
+    fs.readFile(文件路径, 'utf8', (err, 内容) => {
+      如果 (错误) {
+        res.写入头部(200, { 'Content-Type': 'text/html' });
+        res.end();
+        返回;
       }
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(content);
     });
-    return;
-  } else if (req.url === `/${SUB_PATH}`) {
-    const namePart = NAME ? `${NAME}-${ISP}` : ISP;
-    const vlessURL = `vless://${UUID}@${DOMAIN}:443?encryption=none&security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
-    const trojanURL = `trojan://${UUID}@${DOMAIN}:443?security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
-    const subscription = vlessURL + '\n' + trojanURL;
-    const base64Content = Buffer.from(subscription).toString('base64');
+    返回;
+  } else 如果 (请求.网址 === `/${SUB_PATH}`) {
+    常量 namePart = 名称 ? `${名称}-${ISP}` : ISP;
+    常量 vlessURL = `vless://${UUID}@${DOMAIN}:443?encryption=none&security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
+    常量 trojanURL = `trojan://${UUID}@${DOMAIN}:443?security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
+    常量 订阅 = vlessURL + '\n' + trojanURL;
+    常量 base64内容 = 缓冲区.从(订阅).转换为字符串('base64');
     
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end(base64Content + '\n');
+    结果.writeHead(200, { 'Content-Type': 'text/plain' });
+    结果.end(base64内容 + '\n');
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found\n');
+    resres.end('未找到\n');
   }
 });
 
-const wss = new WebSocket.Server({ server: httpServer });
+常量 wss = new WebSocket.Server({ server: httpServer });
 const uuid = UUID.replace(/-/g, "");
 const DNS_SERVERS = ['8.8.4.4', '1.1.1.1'];
-// Custom DNS
-function resolveHost(host) {
-  return new Promise((resolve, reject) => {
+// 自定义DNS
+function resolveHost(主机) {
+  返回 新的 Promise((resolve, 拒绝) => {
     if (/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(host)) {
-      resolve(host);
-      return;
+      解析(host);
+      返回;
     }
     let attempts = 0;
     function tryNextDNS() {
       if (attempts >= DNS_SERVERS.length) {
-        reject(new Error(`Failed to resolve ${host} with all DNS servers`));
-        return;
+        reject(newError`无法使用所有DNS服务器解析${host}`);
+        返回;
       }
       const dnsServer = DNS_SERVERS[attempts];
       attempts++;
@@ -170,23 +170,23 @@ function handleTrojanConnection(ws, msg) {
       offset += 4;
     } else if (atyp === 0x03) {
       const hostLen = msg[offset];
-      offset += 1;
+      偏移量 += 1;
       host = msg.slice(offset, offset + hostLen).toString();
       offset += hostLen;
-    } else if (atyp === 0x04) {
-      host = msg.slice(offset, offset + 16).reduce((s, b, i, a) => 
+    } 否则 如果 (atyp === 0x04) {
+      主机 = msg.slice(offset, offset + 16).reduce((s, b, i, a) => 
         (i % 2 ? s.concat(a.slice(i - 1, i + 1)) : s), [])
-        .map(b => b.readUInt16BE(0).toString(16)).join(':');
+        .map(b => b.readUInt16BE(0).toString(16)).连接(':');
       offset += 16;
     } else {
       return false;
     }
     
     port = msg.readUInt16BE(offset);
-    offset += 2;
+    偏移量 += 2;
     
     if (offset < msg.length && msg[offset] === 0x0d && msg[offset + 1] === 0x0a) {
-      offset += 2;
+      偏移量 += 2;
     }
     
     const duplex = createWebSocketStream(ws);
@@ -225,11 +225,11 @@ wss.on('connection', (ws, req) => {
         if (!handleVlessConnection(ws, msg)) {
           ws.close();
         }
-        return;
+        返回;
       }
     }
 
-    if (!handleTrojanConnection(ws, msg)) {
+    如果 (!handleTrojanConnection(ws, msg)) {
       ws.close();
     }
   }).on('error', () => {});
@@ -255,7 +255,7 @@ const getDownloadUrl = () => {
 const downloadFile = async () => {
   if (!NEZHA_SERVER && !NEZHA_KEY) return;
   
-  try {
+  尝试 {
     const url = getDownloadUrl();
     const response = await axios({
       method: 'get',
@@ -288,7 +288,7 @@ const runnz = async () => {
       console.log('npm is already running, skip running...');
       return;
     }
-  } catch (e) {
+  } 捕获 (e) {
     // 进程不存在时继续运行nezha
   }
 
@@ -328,37 +328,37 @@ uuid: ${UUID}`;
     command = `setsid nohup ./npm -c config.yaml >/dev/null 2>&1 &`;
   } else {
     console.log('NEZHA variable is empty, skip running');
-    return;
+    返回;
   }
 
   try {
     exec(command, { shell: '/bin/bash' }, (err) => {
-      if (err) console.error('npm running error:', err);
-      else console.log('npm is running');
+      if (err) console.error('npm运行错误:', err);
+      else console.log('npm正在运行');
     });
   } catch (error) {
-    console.error(`error: ${error}`);
+    控制台.错误(`错误：${错误}`);
   }   
 }; 
 
-async function addAccessTask() {
-  if (!AUTO_ACCESS) return;
+异步 函数 添加访问任务() {
+  如果 (!AUTO_ACCESS) 返回;
 
-  if (!DOMAIN) {
-    return;
+  如果 (!DOMAIN) {
+    返回;
   }
   const fullURL = `https://${DOMAIN}`;
-  try {
+  尝试 {
     const res = await axios.post("https://oooo.serv00.net/add-url", {
       url: fullURL
     }, {
-      headers: {
+      请求头: {
         'Content-Type': 'application/json'
       }
     });
-    console.log('Automatic Access Task added successfully');
+    控制台.日志('自动访问任务添加成功');
   } catch (error) {
-    // console.error('Error adding Task:', error.message);
+    // 控制台错误：添加任务时出错: error.message;
   }
 }
 
@@ -373,5 +373,5 @@ httpServer.listen(PORT, () => {
     delFiles();
   }, 180000);
   addAccessTask();
-  console.log(`Server is running on port ${PORT}`);
+  控制台.日志(`服务器正在端口${PORT}上运行`);
 });
